@@ -1,0 +1,238 @@
+plugins {
+//    id 'java' // https://docs.gradle.org/current/userguide/java_plugin.html#java_plugin
+//    id 'java-library' // https://docs.gradle.org/current/userguide/java_library_plugin.html
+    id 'application' // https://docs.gradle.org/current/userguide/application_plugin.html
+    id "com.github.johnrengelman.shadow" version "8.1.1"
+
+}
+
+group = 'org.example'
+version = '1.0-SNAPSHOT'
+
+
+java {
+    sourceCompatibility = "17"
+    targetCompatibility = "17"
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.14.0'
+    testImplementation platform('org.junit:junit-bom:5.9.1')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+application {
+    mainClass = 'org.example.Main'
+}
+
+
+// =================================== Changing default sourcesets =====================
+// Default project layout considered by plugin 'java' is provided here : https://docs.gradle.org/current/userguide/java_plugin.html#sec:java_project_layout
+// If we want to change the layout as per project structure we can do that by using sourceSets as follows.
+//sourceSets {
+//    main {
+//        java {
+//            srcDirs = ['provide/your/java/sources']
+//        }
+//        resources {
+//            srcDirs = ['provide/your/java/resources']
+//        }
+//    }
+//
+//    test {
+//        java {
+//            srcDirs = ['provide/your/testjava/sources']
+//        }
+//        resources {
+//            srcDirs = ['provide/your/testjava/resources']
+//        }
+//
+//    }
+//
+//    // we can also write like this
+//    main.java.srcDir("provide/your/java/sources")
+//    main.java.srcDirs(["provide/your/java/sources"])
+//
+//    // Since its groovy we can drop paranthesis
+//    main.java.srcDir "provide/your/java/sources"
+//    main.java.srcDirs = ["provide/your/java/sources"]
+//}
+
+// ================================ Custom tasks ===========================================
+
+// we can define task in following ways
+project.task("mytask0.1"){
+    doLast {
+        println "this is mytask0.1"
+    }
+}
+task("mytask0.2"){
+    doLast {
+        println "this is mytask0.2"
+    }
+}
+task "mytask0.3"{
+    doLast {
+        println "this is mytask0.3"
+    }
+}
+task mytask0{
+    doLast {
+        println "this is mytask0"
+    }
+}
+
+
+// Task phases
+
+task myTaskPhases {
+
+    // Tasks has three phases : Initialization, Configuration and Execution phase
+
+    // Initialization phase is mainly used for configuring multi projects build
+
+    // Following is configuration phase
+    group "myTaskPhase"
+    description "Task to explain phases of task"
+
+    // Following is execution phase
+
+    doFirst {
+        println "this is myTaskPhase doFirst"
+
+    }
+    doLast {
+        println "this is myTaskPhase doLast"
+    }
+}
+
+
+// Try out tasks
+
+task myTask(dependsOn: 'myTask2') {
+    group "MyCustomTasks"
+    description = "My task of hello world"
+
+    mustRunAfter "myTask3" // if there is any cyclic dependency it will throw error.
+    shouldRunAfter "myTask3" // if there is any cyclic dependency it will ignore it.
+
+    finalizedBy "myTaskPhases" // This will run at the end and use for doing any kind of finalize things, like executing flyway, clean up things etc.
+
+    doFirst {
+        println "Inside doFirst"
+    }
+
+    doLast {
+        println "Inside doLast"
+    }
+}
+
+
+task myTask2 {
+    group "MyCustomTasks"
+    dependsOn 'myTask3'
+
+    description = "My task2"
+
+    doFirst {
+        println "Inside doFirst of myTask2"
+    }
+
+    doLast {
+        println "Inside doLast of myTask2"
+    }
+}
+
+task myTask3 {
+    group "MyCustomTasks"
+    description = "My task3"
+
+    doFirst {
+        println "Inside doFirst of myTask3"
+    }
+
+    doLast {
+        println "The artifact group is $project.group"
+    }
+
+    doLast {
+        println "The artifact version is $project.version"
+        println "Inside doLast of myTask3"
+    }
+}
+
+myTask3.doLast {
+    println "Adding to the doLast of myTask3"
+}
+
+
+// ================================ Typed Custom tasks ===========================================
+
+task runMyJar(type: Exec, dependsOn: 'shadowJar'){
+
+//    dependsOn 'shadowJar' // we can also declare dependsOn on the task signature
+
+    def jarName = project.name + "-" + project.version + "-fat.jar"
+
+    executable "java"
+    args "-jar", "build/libs/$jarName"
+}
+
+
+
+//================================= Creating Fat Jar approaches ============================================
+
+
+// ========== Approach 1 overriding jar default task ================
+//jar {
+//    dependsOn 'myTask2' // I can also make it to depend on my custom tasks
+//    manifest {
+//        attributes "Main-Class": "org.example.Main"
+//    }
+//
+//    // we can also write as
+////    manifest.attributes(["Main-Class": "org.example.Main"])
+////    manifest.attributes "Main-Class": "org.example.Main" // its more groovy way as not using paranthesis
+//
+//
+//    from {
+//        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+//    }
+//}
+
+
+// ========== Approach 2 using custom task ================
+// If we want to leave the original jar task as it is, we can create a separate one which will do the same job.
+//The following code will add a new task called customFatJar:
+//task customFatJar(type: Jar) {
+//    manifest {
+//        attributes 'Main-Class': 'org.example.Main'
+//    }
+//    archiveBaseName = "$rootProject.name"
+//    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+//    from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+//    with jar
+//}
+
+// ========== Approach 3 using predefined plugin ================
+
+// For this approach, we just need to apply the plugin id "com.github.johnrengelman.shadow"  version "8.1.1".
+// More details on this plugin :
+// https://plugins.gradle.org/plugin/com.github.johnrengelman.shadow
+// https://github.com/johnrengelman/shadow
+// https://imperceptiblethoughts.com/shadow/
+// And then we dont need to do anything. When we build it, it generates two jars within build/libs dir where one of the jar is
+// having suffix "all". However, we can change this suffix by configuring shadowJar task as below
+shadowJar {
+//    archiveBaseName.set('shadow')
+    archiveClassifier.set('fat')
+//    archiveVersion.set('')
+}
