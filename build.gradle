@@ -9,7 +9,6 @@ plugins {
 group = 'org.example'
 version = '1.0-SNAPSHOT'
 
-
 java {
     sourceCompatibility = "17"
     targetCompatibility = "17"
@@ -69,22 +68,22 @@ application {
 // ================================ Custom tasks ===========================================
 
 // we can define task in following ways
-project.task("mytask0.1"){
+project.task("mytask0.1") {
     doLast {
         println "this is mytask0.1"
     }
 }
-task("mytask0.2"){
+task("mytask0.2") {
     doLast {
         println "this is mytask0.2"
     }
 }
-task "mytask0.3"{
+task "mytask0.3" {
     doLast {
         println "this is mytask0.3"
     }
 }
-task mytask0{
+task mytask0 {
     doLast {
         println "this is mytask0"
     }
@@ -124,7 +123,8 @@ task myTask(dependsOn: 'myTask2') {
     mustRunAfter "myTask3" // if there is any cyclic dependency it will throw error.
     shouldRunAfter "myTask3" // if there is any cyclic dependency it will ignore it.
 
-    finalizedBy "myTaskPhases" // This will run at the end and use for doing any kind of finalize things, like executing flyway, clean up things etc.
+    finalizedBy "myTaskPhases"
+    // This will run at the end and use for doing any kind of finalize things, like executing flyway, clean up things etc.
 
     doFirst {
         println "Inside doFirst"
@@ -176,7 +176,7 @@ myTask3.doLast {
 
 // ================================ Typed Custom tasks ===========================================
 
-task runMyJar(type: Exec, dependsOn: 'shadowJar'){
+task runMyJar(type: Exec, dependsOn: 'shadowJar') {
 
 //    dependsOn 'shadowJar' // we can also declare dependsOn on the task signature
 
@@ -185,7 +185,6 @@ task runMyJar(type: Exec, dependsOn: 'shadowJar'){
     executable "java"
     args "-jar", "build/libs/$jarName"
 }
-
 
 
 //================================= Creating Fat Jar approaches ============================================
@@ -223,7 +222,6 @@ task runMyJar(type: Exec, dependsOn: 'shadowJar'){
 //}
 
 // ========== Approach 3 using predefined plugin ================
-
 // For this approach, we just need to apply the plugin id "com.github.johnrengelman.shadow"  version "8.1.1".
 // More details on this plugin :
 // https://plugins.gradle.org/plugin/com.github.johnrengelman.shadow
