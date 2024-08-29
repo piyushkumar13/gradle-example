@@ -73,6 +73,7 @@ project.task("mytask0.1") {
         println "this is mytask0.1"
     }
 }
+
 task("mytask0.2") {
     doLast {
         println "this is mytask0.2"
@@ -120,11 +121,12 @@ task myTask(dependsOn: 'myTask2') {
     group "MyCustomTasks"
     description = "My task of hello world"
 
-    mustRunAfter "myTask3" // if there is any cyclic dependency it will throw error.
-    shouldRunAfter "myTask3" // if there is any cyclic dependency it will ignore it.
+    mustRunAfter "myTask3" // if there is any cyclic dependency it will throw error. we can also define it outside closure as myTask.mustRunAfter myTask3
+    shouldRunAfter "myTask3" // if there is any cyclic dependency it will ignore it. we can also define it outside closure as myTask.shouldRunAfter myTask3
 
-    finalizedBy "myTaskPhases"
     // This will run at the end and use for doing any kind of finalize things, like executing flyway, clean up things etc.
+    // We can also define it outside closure as myTask.finalizedBy myTaskPhases
+    finalizedBy "myTaskPhases"
 
     doFirst {
         println "Inside doFirst"
@@ -173,6 +175,54 @@ myTask3.doLast {
     println "Adding to the doLast of myTask3"
 }
 
+
+// We can also define task doFirst, doLast, description, group etc after declaring task
+task myTask4
+myTask4.description = "My task4 description"
+myTask4.group = "My task4 group"
+myTask4.doFirst{
+    println("This is myTask4 doFirst1")
+}
+myTask4.doLast{
+    println("This is myTask4 doLast1")
+}
+
+// We can also define task using task register method.
+tasks.register("myTask5"){
+    description = "My task 5 description"
+    group = "My task5 group"
+
+    doFirst {
+        println("My task5 doFirst1")
+    }
+
+    doLast {
+        println("My task5 doLast1")
+    }
+}
+
+tasks.named("myTask5"){// it will fetch the task "myTask4" from the list of registered tasks
+
+    doFirst {
+        println("My task5 doFirst2")
+    }
+
+    doLast {
+        println("My task5 doLast2")
+    }
+}
+
+tasks.named("myTask5"){
+    doLast {
+        println("My task5 doLast3")
+    }
+}
+
+tasks.named("myTask4"){// Note here fetching myTask4. We can fetch it like this as well though not registered using register method.
+    doLast {
+        println("This is myTask4 doLast2")
+    }
+}
 
 // ================================ Typed Custom tasks ===========================================
 
